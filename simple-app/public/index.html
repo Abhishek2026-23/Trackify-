@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trackify</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1a73e8; --primary-dark: #1557b0; --success: #0f9d58;
+      --warning: #f4b400; --danger: #d93025; --bg: #f8faff;
+      --card: #ffffff; --border: #e8edf5; --text: #1f2937; --muted: #6b7280;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+    body { background:var(--bg); color:var(--text); }
+
+    /* ── AUTH ── */
+    #auth-screen { display:flex; align-items:center; justify-content:center; min-height:100vh;
+      background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); }
+    .auth-wrap { width:440px; }
+    .auth-brand { text-align:center; margin-bottom:28px; }
+    .auth-brand .logo { font-size:2.5rem; margin-bottom:8px; }
+    .auth-brand h1 { color:#fff; font-size:1.6rem; font-weight:700; }
+    .auth-brand p { color:rgba(255,255,255,0.75); font-size:.9rem; margin-top:4px; }
+    .auth-card { background:#fff; border-radius:20px; padding:36px; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+    .tabs { display:flex; background:#f1f5f9; border-radius:10px; padding:4px; margin-bottom:24px; }
+    .tab { flex:1; padding:9px; text-align:center; border-radius:8px; cursor:pointer; font-weight:600;
+      font-size:.88rem; color:var(--muted); transition:.2s; }
+    .tab.active { background:#fff; color:var(--primary); box-shadow:0 1px 4px rgba(0,0,0,0.1); }
+    .field { margin-bottom:16px; }
+    .field label { display:block; font-size:.82rem; font-weight:600; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.5px; }
+    .field input, .field select { width:100%; padding:11px 14px; border:1.5px solid var(--border);
+      border-radius:10px; font-size:.95rem; outline:none; transition:.2s; background:#fafbff; }
+    .field input:focus, .field select:focus { border-color:var(--primary); background:#fff; }
+    .role-row { display:flex; gap:10px; margin-bottom:16px; }
+    .role-opt { flex:1; padding:14px 10px; border:2px solid var(--border); border-radius:12px;
+      cursor:pointer; text-align:center; transition:.2s; }
+    .role-opt .icon { font-size:1.6rem; display:block; margin-bottom:4px; }
+    .role-opt .label { font-size:.82rem; font-weight:600; color:var(--muted); }
+    .role-opt.active { border-color:var(--primary); background:#eff6ff; }
+    .role-opt.active .label { color:var(--primary); }
+    .driver-extra { display:none; }
+    .btn-primary { width:100%; padding:13px; background:var(--primary); color:#fff; border:none;
+      border-radius:10px; font-size:1rem; font-weight:600; cursor:pointer; transition:.2s; }
+    .btn-primary:hover { background:var(--primary-dark); }
+    .btn-primary:disabled { opacity:.6; cursor:not-allowed; }
+    .msg { padding:10px 14px; border-radius:8px; font-size:.85rem; margin-bottom:14px; display:none; }
+    .msg.error { background:#fef2f2; color:var(--danger); border:1px solid #fecaca; display:block; }
+    .msg.success { background:#f0fdf4; color:var(--success); border:1px solid #bbf7d0; display:block; }
+    .demo-hint { text-align:center; margin-top:14px; font-size:.78rem; color:var(--muted); }
+    .demo-hint span { color:var(--primary); font-weight:600; cursor:pointer; }
+    .pw-wrap { position:relative; }
+    .pw-wrap input { padding-right:42px; }
+    .pw-eye { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none;
+      border:none; cursor:pointer; font-size:1rem; opacity:.5; padding:4px; }
+    .pw-eye:hover { opacity:1; }
+
+    /* ── APP ── */
+    #app-screen { display:none; height:100vh; flex-direction:column; }
+    .topbar { background:linear-gradient(90deg,#1a73e8,#1557b0); color:#fff; padding:0 20px;
+      height:56px; display:flex; align-items:center; gap:14px; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
+    .topbar .brand { font-size:1rem; font-weight:700; display:flex; align-items:center; gap:8px; }
+    .topbar .brand span { opacity:.7; font-weight:400; font-size:.85rem; }
+    .topbar .spacer { flex:1; }
+    .topbar .user-chip { background:rgba(255,255,255,0.15); padding:5px 12px; border-radius:20px;
+      font-size:.82rem; display:flex; align-items:center; gap:6px; }
+    .topbar .user-chip .dot { width:8px; height:8px; border-radius:50%; background:#4ade80; }
+    .topbar .user-chip .dot.offline { background:#94a3b8; }
+    .topbar button.logout { background:rgba(255,255,255,0.15); border:none; color:#fff; padding:6px 14px;
+      border-radius:8px; cursor:pointer; font-size:.82rem; font-weight:500; }
+    .topbar button.logout:hover { background:rgba(255,255,255,0.25); }
+    .topbar button.back-btn { background:rgba(255,255,255,0.15); border:none; color:#fff; padding:6px 14px;
+      border-radius:8px; cursor:pointer; font-size:.82rem; font-weight:500; margin-right:8px; }
+    .topbar button.back-btn:hover { background:rgba(255,255,255,0.25); }
+
+    .content { display:flex; flex:1; overflow:hidden; }
+    #map { flex:1; }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width:320px; background:#fff; display:flex; flex-direction:column;
+      border-left:1px solid var(--border); overflow:hidden; }
+    .sidebar-header { padding:16px; border-bottom:1px solid var(--border); background:#fafbff; }
+    .sidebar-header h3 { font-size:.95rem; font-weight:700; color:var(--text); }
+    .sidebar-header p { font-size:.78rem; color:var(--muted); margin-top:2px; }
+
+    /* Status panel (driver) */
+    .status-panel { padding:14px 16px; border-bottom:1px solid var(--border); }
+    .status-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .status-badge { display:flex; align-items:center; gap:6px; padding:5px 12px; border-radius:20px;
+      font-size:.8rem; font-weight:600; }
+    .status-badge.online { background:#dcfce7; color:#166534; }
+    .status-badge.offline { background:#f1f5f9; color:var(--muted); }
+    .status-badge .pulse { width:8px; height:8px; border-radius:50%; background:#22c55e; }
+    .status-badge.online .pulse { animation:pulse 1.5s infinite; }
+    .status-badge.offline .pulse { background:#94a3b8; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+    .btn-toggle { width:100%; padding:10px; border:none; border-radius:10px; font-size:.88rem;
+      font-weight:600; cursor:pointer; transition:.2s; }
+    .btn-toggle.go-online { background:var(--success); color:#fff; }
+    .btn-toggle.go-online:hover { background:#0a8a4e; }
+    .btn-toggle.go-offline { background:#fee2e2; color:var(--danger); }
+    .btn-toggle.go-offline:hover { background:#fecaca; }
+    .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+    .stat-box { background:#f8faff; border-radius:10px; padding:10px 12px; border:1px solid var(--border); }
+    .stat-box .val { font-size:1.1rem; font-weight:700; color:var(--primary); }
+    .stat-box .lbl { font-size:.72rem; color:var(--muted); margin-top:2px; }
+
+    /* Demo mode toggle */
+    .demo-toggle { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+    .demo-toggle label { font-size:.82rem; font-weight:600; color:var(--text); flex:1; }
+    .demo-toggle small { font-size:.72rem; color:var(--muted); display:block; }
+    .switch { position:relative; width:42px; height:24px; }
+    .switch input { opacity:0; width:0; height:0; }
+    .slider { position:absolute; inset:0; background:#cbd5e1; border-radius:24px; cursor:pointer; transition:.3s; }
+    .slider:before { content:''; position:absolute; width:18px; height:18px; left:3px; bottom:3px;
+      background:#fff; border-radius:50%; transition:.3s; }
+    input:checked + .slider { background:var(--primary); }
+    input:checked + .slider:before { transform:translateX(18px); }
+
+    /* Driver cards */
+    .driver-list { flex:1; overflow-y:auto; padding:8px; }
+    .driver-card { background:#fff; border:1.5px solid var(--border); border-radius:12px; padding:12px 14px;
+      margin-bottom:8px; cursor:pointer; transition:.2s; }
+    .driver-card:hover { border-color:var(--primary); box-shadow:0 2px 8px rgba(26,115,232,0.1); }
+    .driver-card.nearest { border-color:var(--success); background:#f0fdf4; }
+    .driver-card .dc-top { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .driver-card .avatar { width:38px; height:38px; border-radius:10px; display:flex; align-items:center;
+      justify-content:center; font-size:1.3rem; flex-shrink:0; }
+    .avatar.auto { background:#fff3e0; }
+    .avatar.bus { background:#e3f2fd; }
+    .avatar.taxi { background:#f3e5f5; }
+    .driver-card .dc-name { font-weight:600; font-size:.88rem; }
+    .driver-card .dc-id { font-size:.75rem; color:var(--muted); }
+    .vtype-badge { display:inline-block; padding:2px 8px; border-radius:6px; font-size:.72rem; font-weight:600; margin-left:auto; }
+    .vtype-badge.auto { background:#fff3e0; color:#e65100; }
+    .vtype-badge.bus { background:#e3f2fd; color:#1565c0; }
+    .vtype-badge.taxi { background:#f3e5f5; color:#6a1b9a; }
+    .driver-card .dc-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+    .dc-stat { text-align:center; background:#f8faff; border-radius:8px; padding:6px 4px; }
+    .dc-stat .v { font-size:.85rem; font-weight:700; color:var(--text); }
+    .dc-stat .l { font-size:.68rem; color:var(--muted); }
+    .nearest-tag { font-size:.7rem; font-weight:700; color:var(--success); background:#dcfce7;
+      padding:2px 8px; border-radius:6px; display:inline-block; margin-bottom:6px; }
+
+    /* Passenger radius info */
+    .radius-banner { margin:8px; padding:10px 12px; background:#eff6ff; border-radius:10px;
+      border:1px solid #bfdbfe; font-size:.8rem; color:#1e40af; display:flex; align-items:center; gap:8px; }
+
+    .empty-state { padding:40px 20px; text-align:center; color:var(--muted); }
+    .empty-state .icon { font-size:2.5rem; margin-bottom:10px; }
+    .empty-state p { font-size:.85rem; }
+
+    .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#1f2937; color:#fff; padding:12px 20px; border-radius:10px; font-size:.88rem; font-weight:500; z-index:9999; display:flex; align-items:center; gap:8px; box-shadow:0 4px 20px rgba(0,0,0,0.3); opacity:0; transition:opacity .3s; pointer-events:none; }
+    .toast.show { opacity:1; }
+    .toast.warning { background:#92400e; }
+    .toast.success { background:#065f46; }
+    .leaflet-popup-content-wrapper { border-radius:12px !important; box-shadow:0 4px 20px rgba(0,0,0,0.15) !important; }
+    .popup-inner { min-width:160px; }
+    .popup-inner h4 { font-size:.9rem; font-weight:700; margin-bottom:6px; }
+    .popup-inner .row { display:flex; justify-content:space-between; font-size:.78rem; margin-bottom:3px; }
+    .popup-inner .row span { color:var(--muted); }
+    .popup-inner .eta-tag { margin-top:8px; background:#dcfce7; color:#166534; padding:4px 10px;
+      border-radius:6px; font-size:.78rem; font-weight:600; text-align:center; }
+  </style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-wrap">
+    <div class="auth-brand">
+      <div class="logo">🚌</div>
+      <h1>Trackify</h1>
+      <p>Real-Time Bus Tracking System</p>
+    </div>
+    <div class="auth-card">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('login')">Sign In</div>
+        <div class="tab" onclick="switchTab('register')">Register</div>
+      </div>
+      <div class="msg" id="auth-msg"></div>
+
+      <div id="login-form">
+        <div class="field"><label>Phone Number</label><input id="l-phone" type="tel" placeholder="Enter 10-digit phone" autocomplete="username" /></div>
+        <div class="field">
+          <label>Password</label>
+          <div class="pw-wrap">
+            <input id="l-pass" type="password" placeholder="Enter password" autocomplete="off" />
+            <button type="button" class="pw-eye" onclick="togglePw('l-pass',this)" tabindex="-1">👁</button>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="doLogin()" id="login-btn">Sign In</button>
+      </div>
+
+      <div id="register-form" style="display:none">
+        <div class="field"><label>Full Name</label><input id="r-name" placeholder="Your full name" /></div>
+        <div class="field"><label>Phone Number</label><input id="r-phone" type="tel" placeholder="10-digit phone" /></div>
+        <div class="field"><label>Password</label><input id="r-pass" type="password" placeholder="Min 6 characters" /></div>
+        <div class="field"><label>I am registering as</label></div>
+        <div class="role-row">
+          <div class="role-opt active" id="opt-passenger" onclick="selectRole('passenger')">
+            <span class="icon">🧍</span><span class="label">Passenger</span>
+          </div>
+          <div class="role-opt" id="opt-driver" onclick="selectRole('driver')">
+            <span class="icon">🚗</span><span class="label">Driver</span>
+          </div>
+        </div>
+        <div class="driver-extra" id="driver-extra">
+          <div class="field"><label>Vehicle Type</label>
+            <select id="r-vtype"><option value="bus">🚌 Bus</option></select>
+          </div>
+          <div class="field"><label>Vehicle Number</label><input id="r-vnum" placeholder="e.g. PB-01-1234" /></div>
+        </div>
+        <button class="btn-primary" onclick="doRegister()" id="reg-btn">Create Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="logout()" title="Back to Login">← Back</button>
+    <div class="brand">🚌 Trackify <span id="portal-label">Portal</span></div>
+    <div class="spacer"></div>
+    <div class="user-chip">
+      <div class="dot" id="top-dot"></div>
+      <span id="top-user">User</span>
+    </div>
+    <button class="logout" onclick="logout()">Logout</button>
+  </div>
+  <div class="content">
+    <div id="map"></div>
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h3 id="sidebar-title">Live View</h3>
+        <p id="sidebar-sub">Buses within 1 km</p>
+      </div>
+
+      <!-- Passenger online panel -->
+      <div class="status-panel" id="passenger-panel" style="display:none">
+        <div class="status-row">
+          <div class="status-badge offline" id="pass-status-badge">
+            <div class="pulse"></div><span id="pass-status-text">Offline</span>
+          </div>
+        </div>
+        <button class="btn-toggle go-online" id="pass-toggle-btn" onclick="toggleOnline()">🟢 Go Online — Share My Location</button>
+      </div>
+
+      <!-- Driver controls -->
+      <div class="status-panel" id="driver-panel" style="display:none">
+        <div class="status-row">
+          <div class="status-badge offline" id="status-badge">
+            <div class="pulse"></div><span id="status-text">Offline</span>
+          </div>
+        </div>
+        <button class="btn-toggle go-online" id="toggle-btn" onclick="toggleOnline()">🟢 Go Online</button>
+        <div class="stats-grid" id="driver-stats" style="display:none">
+          <div class="stat-box"><div class="val" id="stat-speed">0</div><div class="lbl">Speed km/h</div></div>
+          <div class="stat-box"><div class="val" id="stat-passengers">0</div><div class="lbl">Passengers Nearby</div></div>
+        </div>
+      </div>
+
+      <!-- Demo mode toggle -->
+      <div class="demo-toggle">
+        <div>
+          <label>🎬 Demo Mode</label>
+          <small>Auto-simulate vehicle movement</small>
+        </div>
+        <label class="switch"><input type="checkbox" id="demo-toggle" onchange="toggleDemo(this.checked)" /><span class="slider"></span></label>
+      </div>
+
+      <!-- Passenger radius banner -->
+      <div class="radius-banner" id="radius-banner" style="display:none">
+        📍 Showing drivers within <strong>&nbsp;1 km&nbsp;</strong> of your location
+      </div>
+
+      <div class="driver-list" id="sidebar-list">
+        <div class="empty-state"><div class="icon">📡</div><p>Go online or enable Demo Mode to see live vehicles</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- LOGOUT CONFIRM MODAL -->
+<div id="logout-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;display:none;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:32px 28px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.25);text-align:center;">
+    <div style="font-size:2.2rem;margin-bottom:12px;">🚪</div>
+    <h3 style="font-size:1.05rem;font-weight:700;color:#1f2937;margin-bottom:8px;">Are you sure you want to logout?</h3>
+    <p style="font-size:.83rem;color:#6b7280;margin-bottom:24px;">Your live location will be removed.</p>
+    <div style="display:flex;gap:10px;">
+      <button onclick="confirmLogout(false)" style="flex:1;padding:11px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;font-size:.9rem;font-weight:600;color:#6b7280;cursor:pointer;">No, Stay</button>
+      <button onclick="confirmLogout(true)" style="flex:1;padding:11px;border:none;border-radius:10px;background:#d93025;color:#fff;font-size:.9rem;font-weight:600;cursor:pointer;">Yes, Logout</button>
+    </div>
+  </div>
+</div>
+
+<script src="/app.js?v=21"></script>
+</body>
+</html>

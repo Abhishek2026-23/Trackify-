@@ -1,0 +1,160 @@
+{
+  "users": {
+    "9999999999": {
+      "id": "DEMO0001",
+      "name": "Demo Admin",
+      "phone": "9999999999",
+      "email": "demo@bus.com",
+      "password": "admin123",
+      "role": "passenger"
+    },
+    "9876543210": {
+      "id": "SEED01",
+      "name": "Gurpreet Singh",
+      "phone": "9876543210",
+      "password": "demo123",
+      "role": "driver",
+      "driverId": "DRV-SEED01",
+      "vehicleType": "bus",
+      "vehicleNumber": "UP-78-1234",
+      "isAvailable": true
+    },
+    "9876543211": {
+      "id": "SEED02",
+      "name": "Harjinder Kaur",
+      "phone": "9876543211",
+      "password": "demo123",
+      "role": "driver",
+      "driverId": "DRV-SEED02",
+      "vehicleType": "bus",
+      "vehicleNumber": "UP-78-5678",
+      "isAvailable": true
+    },
+    "9876543212": {
+      "id": "SEED03",
+      "name": "Manpreet Sharma",
+      "phone": "9876543212",
+      "password": "demo123",
+      "role": "driver",
+      "driverId": "DRV-SEED03",
+      "vehicleType": "bus",
+      "vehicleNumber": "UP-78-9012",
+      "isAvailable": true
+    },
+    "9876543213": {
+      "id": "SEED04",
+      "name": "Balwinder Pal",
+      "phone": "9876543213",
+      "password": "demo123",
+      "role": "driver",
+      "driverId": "DRV-SEED04",
+      "vehicleType": "bus",
+      "vehicleNumber": "UP-78-3456",
+      "isAvailable": true
+    },
+    "9555544444": {
+      "id": "E65CC4B9",
+      "name": "abhishek",
+      "phone": "9555544444",
+      "password": "admin123456789",
+      "role": "passenger"
+    },
+    "9000000001": {
+      "id": "75D59B7F",
+      "name": "abhishek",
+      "phone": "9000000001",
+      "password": "admin123456789",
+      "role": "driver",
+      "driverId": "DRV-762A331C",
+      "vehicleType": "bus",
+      "vehicleNumber": "Pb-01-2005",
+      "isAvailable": false
+    },
+    "9876543217": {
+      "id": "9ED1D36D",
+      "name": "abhishek singh",
+      "phone": "9876543217",
+      "password": "4561230147",
+      "role": "passenger"
+    },
+    "9874563210": {
+      "id": "817F3CF1",
+      "name": "abhishek singh",
+      "phone": "9874563210",
+      "password": "456123852",
+      "role": "driver",
+      "driverId": "DRV-6220EDF0",
+      "vehicleType": "bus",
+      "vehicleNumber": "pb-01-987",
+      "isAvailable": false
+    }
+  },
+  "drivers": {
+    "DRV-SEED01": {
+      "id": "SEED01",
+      "name": "Gurpreet Singh",
+      "phone": "9876543210",
+      "password": "demo123",
+      "role": "driver",
+      "driverId": "DRV-SEED01",
+      "vehicleType": "bus",
+      "vehicleNumber": "UP-78-1234",
+      "isAvailable": true
+    },
+    "DRV-SEED02": {
+      "id": "SEED02",
+      "name": "Harjinder Kaur",
+      "phone": "9876543211",
+      "password": "demo123",
+      "role": "driver",
+      "driverId": "DRV-SEED02",
+      "vehicleType": "bus",
+      "vehicleNumber": "UP-78-5678",
+      "isAvailable": true
+    },
+    "DRV-SEED03": {
+      "id": "SEED03",
+      "name": "Manpreet Sharma",
+      "phone": "9876543212",
+      "password": "demo123",
+      "role": "driver",
+      "driverId": "DRV-SEED03",
+      "vehicleType": "bus",
+      "vehicleNumber": "UP-78-9012",
+      "isAvailable": true
+    },
+    "DRV-SEED04": {
+      "id": "SEED04",
+      "name": "Balwinder Pal",
+      "phone": "9876543213",
+      "password": "demo123",
+      "role": "driver",
+      "driverId": "DRV-SEED04",
+      "vehicleType": "bus",
+      "vehicleNumber": "UP-78-3456",
+      "isAvailable": true
+    },
+    "DRV-762A331C": {
+      "id": "75D59B7F",
+      "name": "abhishek",
+      "phone": "9000000001",
+      "password": "admin123456789",
+      "role": "driver",
+      "driverId": "DRV-762A331C",
+      "vehicleType": "bus",
+      "vehicleNumber": "Pb-01-2005",
+      "isAvailable": false
+    },
+    "DRV-6220EDF0": {
+      "id": "817F3CF1",
+      "name": "abhishek singh",
+      "phone": "9874563210",
+      "password": "456123852",
+      "role": "driver",
+      "driverId": "DRV-6220EDF0",
+      "vehicleType": "bus",
+      "vehicleNumber": "pb-01-987",
+      "isAvailable": false
+    }
+  }
+}

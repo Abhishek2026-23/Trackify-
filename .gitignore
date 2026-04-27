@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Build
+build/
+dist/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Mobile
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+.expo/
+
+# Database
+*.db
+*.sqlite
