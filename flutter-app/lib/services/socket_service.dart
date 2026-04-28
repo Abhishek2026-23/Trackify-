@@ -1,17 +1,18 @@
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:flutter/foundation.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../utils/constants.dart';
 import '../models/driver_model.dart';
 import 'api_service.dart';
 
 class SocketService {
-  static IO.Socket? _socket;
+  static io.Socket? _socket;
 
   static Future<void> connect() async {
     final token = await ApiService.getToken();
 
-    _socket = IO.io(
+    _socket = io.io(
       AppConstants.socketUrl,
-      IO.OptionBuilder()
+      io.OptionBuilder()
           .setTransports(['websocket', 'polling'])
           .disableAutoConnect()
           .setAuth({'token': token ?? ''})
@@ -21,9 +22,9 @@ class SocketService {
     );
 
     _socket!.connect();
-    _socket!.onConnect((_) => print('✓ Socket connected'));
-    _socket!.onDisconnect((_) => print('Socket disconnected'));
-    _socket!.onConnectError((e) => print('Socket connect error: $e'));
+    _socket!.onConnect((_) => debugPrint('✓ Socket connected'));
+    _socket!.onDisconnect((_) => debugPrint('Socket disconnected'));
+    _socket!.onConnectError((e) => debugPrint('Socket connect error: $e'));
   }
 
   static void disconnect() {

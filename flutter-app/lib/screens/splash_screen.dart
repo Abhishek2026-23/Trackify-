@@ -27,8 +27,8 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _navigate() {
-    final auth = context.read<AuthProvider>();
     if (!mounted) return;
+    final auth = context.read<AuthProvider>();
     if (auth.isLoggedIn) {
       final screen = auth.user!.isDriver
           ? const DriverDashboard()

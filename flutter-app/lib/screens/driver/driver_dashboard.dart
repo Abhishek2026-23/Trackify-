@@ -44,10 +44,12 @@ class _DriverDashboardState extends State<DriverDashboard> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
+              final navigator = Navigator.of(context);
+              final auth = context.read<AuthProvider>();
               loc.stopTracking();
-              await context.read<AuthProvider>().logout();
+              await auth.logout();
               if (!mounted) return;
-              Navigator.pushAndRemoveUntil(context,
+              navigator.pushAndRemoveUntil(
                   MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
                   (_) => false);
             },

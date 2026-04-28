@@ -16,7 +16,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneCtrl = TextEditingController();
-  final _driverIdCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _obscure = true;
 
@@ -25,15 +24,16 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
     final auth = context.read<AuthProvider>();
-    final data = isDriver
-        ? {'driverId': _driverIdCtrl.text.trim(), 'password': _passCtrl.text}
-        : {'phone': _phoneCtrl.text.trim(), 'password': _passCtrl.text};
+    final navigator = Navigator.of(context);
+    final data = {
+      'phone': _phoneCtrl.text.trim(),
+      'password': _passCtrl.text,
+    };
 
     final ok = await auth.login(data);
     if (!mounted) return;
     if (ok) {
-      Navigator.pushAndRemoveUntil(
-        context,
+      navigator.pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) =>
             isDriver ? const DriverDashboard() : const PassengerMapScreen()),
         (_) => false,
@@ -58,21 +58,13 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 20),
             Text(isDriver ? '🚗' : '👤', style: const TextStyle(fontSize: 64)),
             const SizedBox(height: 24),
-            if (isDriver)
-              TextFormField(
-                controller: _driverIdCtrl,
-                decoration: const InputDecoration(labelText: 'Driver ID',
-                    prefixIcon: Icon(Icons.badge)),
-                validator: (v) => v!.isEmpty ? 'Enter Driver ID' : null,
-              )
-            else
-              TextFormField(
-                controller: _phoneCtrl,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(labelText: 'Phone Number',
-                    prefixIcon: Icon(Icons.phone)),
-                validator: (v) => v!.length < 10 ? 'Enter valid phone' : null,
-              ),
+            TextFormField(
+              controller: _phoneCtrl,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(labelText: 'Phone Number',
+                  prefixIcon: Icon(Icons.phone)),
+              validator: (v) => v!.length < 10 ? 'Enter valid phone' : null,
+            ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _passCtrl,
@@ -85,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),
               ),
-              validator: (v) => v!.length < 6 ? 'Min 6 characters' : null,
+              validator: (v) => v!.length < 8 ? 'Min 8 characters' : null,
             ),
             const SizedBox(height: 28),
             auth.loading

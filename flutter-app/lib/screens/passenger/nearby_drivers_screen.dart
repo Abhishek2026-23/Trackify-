@@ -45,7 +45,7 @@ class NearbyDriversScreen extends StatelessWidget {
                       label: Text(labels[type]!),
                       selected: drivers.filter == type,
                       onSelected: (_) => drivers.setFilter(type),
-                      selectedColor: AppTheme.primary.withOpacity(0.2),
+                      selectedColor: AppTheme.primary.withValues(alpha: 0.2),
                     ),
                   );
                 }).toList(),
@@ -92,7 +92,7 @@ class _DriverListTile extends StatelessWidget {
         leading: Container(
           width: 52, height: 52,
           decoration: BoxDecoration(
-            color: AppTheme.primary.withOpacity(0.1),
+            color: AppTheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(child: Text(driver.vehicleIcon,
@@ -138,7 +138,7 @@ class _Tag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(text, style: TextStyle(color: color, fontSize: 11,

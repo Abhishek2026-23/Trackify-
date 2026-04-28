@@ -41,10 +41,11 @@ class DriverModel {
 
   String get vehicleIcon {
     switch (vehicleType) {
-      case 'bus':    return '🚌';
+      case 'bus':     return '🚌';
       case 'minibus': return '🚐';
-      case 'taxi':   return '🚕';
-      default:       return '🚌';
+      case 'taxi':    return '🚕';
+      case 'auto':    return '🛺';
+      default:        return '🚌';
     }
   }
 

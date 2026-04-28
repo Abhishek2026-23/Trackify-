@@ -53,9 +53,10 @@ class _PassengerMapScreenState extends State<PassengerMapScreen> {
               Navigator.push(context, MaterialPageRoute(
                   builder: (_) => const NearbyDriversScreen()))),
           IconButton(icon: const Icon(Icons.logout), onPressed: () async {
+            final navigator = Navigator.of(context);
             await context.read<AuthProvider>().logout();
             if (!mounted) return;
-            Navigator.pushAndRemoveUntil(context,
+            navigator.pushAndRemoveUntil(
                 MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
                 (_) => false);
           }),
@@ -98,8 +99,8 @@ class _PassengerMapScreenState extends State<PassengerMapScreen> {
                           color: _selected?.driverId == d.driverId
                               ? AppTheme.secondary : AppTheme.primary,
                           shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(color: Colors.black26,
-                              blurRadius: 4, offset: const Offset(0, 2))],
+                          boxShadow: const [BoxShadow(color: Colors.black26,
+                              blurRadius: 4, offset: Offset(0, 2))],
                         ),
                         child: Center(child: Text(d.vehicleIcon,
                             style: const TextStyle(fontSize: 22))),
@@ -161,7 +162,7 @@ class _FilterBar extends StatelessWidget {
               selected: selected,
               onSelected: (_) => prov.setFilter(type),
               backgroundColor: Colors.white,
-              selectedColor: AppTheme.primary.withOpacity(0.2),
+              selectedColor: AppTheme.primary.withValues(alpha: 0.2),
               checkmarkColor: AppTheme.primary,
             ),
           );
