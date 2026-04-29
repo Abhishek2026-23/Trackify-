@@ -15,7 +15,7 @@ class NearbyDriversScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nearby Drivers'),
+        title: const Text('Nearby Buses'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -30,27 +30,26 @@ class NearbyDriversScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Filter bar
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: ['all', 'auto', 'bus', 'taxi'].map((type) {
-                  final labels = {'all': '🔍 All', 'auto': '🛺 Auto',
-                                  'bus': '🚌 Bus', 'taxi': '🚕 Taxi'};
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(labels[type]!),
-                      selected: drivers.filter == type,
-                      onSelected: (_) => drivers.setFilter(type),
-                      selectedColor: AppTheme.primary.withValues(alpha: 0.2),
-                    ),
-                  );
-                }).toList(),
-              ),
+          // Status bar
+          Container(
+            margin: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                  color: AppTheme.primary.withValues(alpha: 0.2)),
             ),
+            child: Row(children: [
+              const Text('🚌', style: TextStyle(fontSize: 20)),
+              const SizedBox(width: 10),
+              Text(
+                '${drivers.filteredDrivers.where((d) => d.isAvailable).length} buses available within 1 km',
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.primary),
+              ),
+            ]),
           ),
           // Driver list
           Expanded(
@@ -58,11 +57,18 @@ class NearbyDriversScreen extends StatelessWidget {
                 ? const Center(child: CircularProgressIndicator())
                 : drivers.filteredDrivers.isEmpty
                     ? const Center(
-                        child: Column(mainAxisAlignment: MainAxisAlignment.center,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text('😔', style: TextStyle(fontSize: 48)),
+                            Text('🚌', style: TextStyle(fontSize: 56)),
                             SizedBox(height: 12),
-                            Text('No drivers nearby', style: TextStyle(fontSize: 18)),
+                            Text('No buses nearby',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600)),
+                            SizedBox(height: 6),
+                            Text('Try refreshing or check back later',
+                                style: TextStyle(color: Colors.grey)),
                           ],
                         ),
                       )
@@ -90,39 +96,52 @@ class _DriverListTile extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.all(12),
         leading: Container(
-          width: 52, height: 52,
+          width: 52,
+          height: 52,
           decoration: BoxDecoration(
             color: AppTheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Center(child: Text(driver.vehicleIcon,
-              style: const TextStyle(fontSize: 28))),
+          child: Center(
+              child: Text(driver.vehicleIcon,
+                  style: const TextStyle(fontSize: 28))),
         ),
         title: Text(driver.driverName,
             style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('${driver.vehicleType.toUpperCase()} • ${driver.vehicleNumber}'),
-          const SizedBox(height: 4),
-          Row(children: [
-            _Tag(color: AppTheme.primary,
-                text: '📍 ${driver.distanceKm?.toStringAsFixed(1) ?? '?'} km'),
-            const SizedBox(width: 8),
-            _Tag(color: AppTheme.accent,
-                text: '⏱ ${driver.etaMinutes?.toStringAsFixed(0) ?? '?'} min'),
-            const SizedBox(width: 8),
-            _Tag(color: Colors.orange,
-                text: '⚡ ${driver.speed.toStringAsFixed(0)} km/h'),
-          ]),
-        ]),
+        subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${driver.vehicleType.toUpperCase()} • ${driver.vehicleNumber}'),
+              const SizedBox(height: 4),
+              Row(children: [
+                _Tag(
+                    color: AppTheme.primary,
+                    text:
+                        '📍 ${driver.distanceKm?.toStringAsFixed(1) ?? '?'} km'),
+                const SizedBox(width: 8),
+                _Tag(
+                    color: AppTheme.accent,
+                    text:
+                        '⏱ ${driver.etaMinutes?.toStringAsFixed(0) ?? '?'} min'),
+                const SizedBox(width: 8),
+                _Tag(
+                    color: Colors.orange,
+                    text: '⚡ ${driver.speed.toStringAsFixed(0)} km/h'),
+              ]),
+            ]),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: driver.isAvailable ? AppTheme.accent : Colors.grey,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(driver.isAvailable ? 'Available' : 'Busy',
-              style: const TextStyle(color: Colors.white, fontSize: 12,
-                  fontWeight: FontWeight.bold)),
+          child: Text(
+            driver.isAvailable ? 'Available' : 'Busy',
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold),
+          ),
         ),
       ),
     );
@@ -141,8 +160,9 @@ class _Tag extends StatelessWidget {
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(text, style: TextStyle(color: color, fontSize: 11,
-          fontWeight: FontWeight.w600)),
+      child: Text(text,
+          style: TextStyle(
+              color: color, fontSize: 11, fontWeight: FontWeight.w600)),
     );
   }
 }

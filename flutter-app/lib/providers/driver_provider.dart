@@ -6,7 +6,7 @@ import '../services/socket_service.dart';
 
 class DriverProvider extends ChangeNotifier {
   final Map<String, DriverModel> _drivers = {};
-  String _filter = 'all';
+  String _filter = 'bus'; // default to bus only
   bool _loading = false;
 
   List<DriverModel> get drivers => _drivers.values.toList()
@@ -43,5 +43,6 @@ class DriverProvider extends ChangeNotifier {
     }
   }
 
+  @override
   void dispose() { SocketService.disconnect(); super.dispose(); }
 }

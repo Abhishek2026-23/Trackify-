@@ -34,6 +34,28 @@ class LocationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Start sending location to backend (passenger mode)
+  void startPassengerTracking(String userId) {
+    if (_isTracking) return;
+    _isTracking = true;
+    notifyListeners();
+    _timer = Timer.periodic(
+      const Duration(seconds: AppConstants.locationIntervalSec),
+      (_) async {
+        try {
+          _currentPosition = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.high);
+          await ApiService.updatePassengerLocation(
+            userId: userId,
+            lat: _currentPosition!.latitude,
+            lng: _currentPosition!.longitude,
+          );
+          notifyListeners();
+        } catch (_) {}
+      },
+    );
+  }
+
   // Start sending location to backend (driver mode)
   void startTracking(String driverId, bool isAvailable) {
     if (_isTracking) return;
