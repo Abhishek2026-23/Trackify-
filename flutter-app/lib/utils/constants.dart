@@ -1,12 +1,15 @@
 class AppConstants {
-  // For Flutter Web (Chrome): use localhost
-  // For Android emulator: use 10.0.2.2
-  // For real device: use your machine's IP
-  static const String baseUrl   = 'http://localhost:5001/api/v1';
-  static const String socketUrl = 'http://localhost:5001';
+  // ── Production backend (Render) ───────────────────────────────
+  static const String baseUrl   = 'https://trackify-zwup.onrender.com/api/v1';
+  static const String socketUrl = 'https://trackify-zwup.onrender.com';
 
-  // For iOS simulator use: http://localhost:5001/api/v1
-  // For real device use: http://YOUR_MACHINE_IP:5001/api/v1
+  // ── Local development (uncomment when running locally) ────────
+  // static const String baseUrl   = 'http://localhost:5001/api/v1';
+  // static const String socketUrl = 'http://localhost:5001';
+
+  // ── Android emulator (uncomment for emulator testing) ─────────
+  // static const String baseUrl   = 'http://10.0.2.2:5001/api/v1';
+  // static const String socketUrl = 'http://10.0.2.2:5001';
 
   // Auth endpoints
   static const String register      = '/auth/register';
@@ -35,6 +38,6 @@ class AppConstants {
   static const String health = '/health';
 
   // Config
-  static const double nearbyRadiusKm    = 5.0;
+  static const double nearbyRadiusKm      = 5.0;
   static const int    locationIntervalSec = 5;
 }
