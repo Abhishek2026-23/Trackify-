@@ -3,12 +3,19 @@ const socketIO = require('socket.io');
 let io;
 
 const initializeSocket = (server) => {
+  const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',')
+    : ['*'];
+
   io = socketIO(server, {
     cors: {
-      origin: process.env.CORS_ORIGIN.split(','),
+      origin: allowedOrigins,
       methods: ['GET', 'POST'],
+      credentials: true,
     },
     transports: ['websocket', 'polling'],
+    // Required for Render — trust the proxy
+    allowEIO3: true,
   });
 
   io.on('connection', (socket) => {
