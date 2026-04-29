@@ -18,7 +18,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _emailCtrl   = TextEditingController();
   final _passCtrl    = TextEditingController();
   final _vehicleCtrl = TextEditingController();
-  String _vehicleType = 'auto';
+  String _vehicleType = 'bus';
   bool _obscure = true;
 
   bool get isDriver => widget.role == 'driver';
@@ -78,13 +78,11 @@ class _SignupScreenState extends State<SignupScreen> {
             const SizedBox(height: 14),
             if (isDriver) ...[
               DropdownButtonFormField<String>(
-                value: _vehicleType,
+                initialValue: _vehicleType,
                 decoration: const InputDecoration(labelText: 'Vehicle Type',
-                    prefixIcon: Icon(Icons.directions_car)),
+                    prefixIcon: Icon(Icons.directions_bus)),
                 items: const [
-                  DropdownMenuItem(value: 'auto', child: Text('🛺 Auto')),
-                  DropdownMenuItem(value: 'bus',  child: Text('🚌 Bus')),
-                  DropdownMenuItem(value: 'taxi', child: Text('🚕 Taxi')),
+                  DropdownMenuItem(value: 'bus', child: Text('🚌 Bus')),
                 ],
                 onChanged: (v) => setState(() => _vehicleType = v!),
               ),
