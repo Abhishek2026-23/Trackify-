@@ -24,7 +24,16 @@ export default function AdminDashboard({ user, onLogout }) {
     fetchData();
     socketService.connect();
     socketService.onLocationUpdate((data) => {
-      setBuses(prev => prev.map(b => b.bus_id === data.bus_id ? { ...b, location: data } : b));
+      // Production backend sends: { bus_id, latitude, longitude, speed, ... }
+      // Map the incoming update onto the matching bus in state
+      setBuses(prev => prev.map(b =>
+        b.bus_id === data.bus_id ? { ...b, location: data } : b
+      ));
+    });
+    socketService.onDriverOffline((data) => {
+      setBuses(prev => prev.map(b =>
+        b.bus_id === data.bus_id ? { ...b, location: null } : b
+      ));
     });
     return () => socketService.disconnect();
   }, []);

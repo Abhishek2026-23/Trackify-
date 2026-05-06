@@ -1,22 +1,61 @@
 const redis = require('redis');
 require('dotenv').config();
 
-let redisClient = null;
 let redisAvailable = false;
 
-// Create a mock client for when Redis is unavailable
-const mockClient = {
-  setEx: async () => {},
-  get: async () => null,
-  del: async () => {},
-  keys: async () => [],
-  ping: async () => { throw new Error('Redis not available'); },
-  on: () => {},
+// ── In-memory fallback store ──────────────────────────────────────
+// Used when Redis is not available. Supports TTL via expiry timestamps.
+const memStore = new Map(); // key → { value, expiresAt }
+
+function memSet(key, ttlSeconds, value) {
+  memStore.set(key, {
+    value,
+    expiresAt: Date.now() + ttlSeconds * 1000,
+  });
+}
+
+function memGet(key) {
+  const entry = memStore.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    memStore.delete(key);
+    return null;
+  }
+  return entry.value;
+}
+
+function memKeys(pattern) {
+  // Convert Redis glob pattern (e.g. "driver:location:*") to a regex
+  const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+  const now = Date.now();
+  const result = [];
+  for (const [key, entry] of memStore.entries()) {
+    if (now > entry.expiresAt) { memStore.delete(key); continue; }
+    if (regex.test(key)) result.push(key);
+  }
+  return result;
+}
+
+// Periodically evict expired keys from the in-memory store
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of memStore.entries()) {
+    if (now > entry.expiresAt) memStore.delete(key);
+  }
+}, 10_000);
+
+// ── In-memory client (Redis-compatible interface) ─────────────────
+const inMemoryClient = {
+  setEx: async (key, ttl, value) => { memSet(key, ttl, value); return 'OK'; },
+  get:   async (key) => memGet(key),
+  del:   async (key) => { memStore.delete(key); return 1; },
+  keys:  async (pattern) => memKeys(pattern),
+  ping:  async () => { throw new Error('Redis not available (using in-memory fallback)'); },
+  on:    () => {},
 };
 
+// ── Redis client creation ─────────────────────────────────────────
 async function createRedisClient() {
-  // Upstash / Render Redis supply REDIS_URL (redis:// or rediss://)
-  // Fall back to individual host/port for local dev
   const clientConfig = process.env.REDIS_URL
     ? {
         url: process.env.REDIS_URL,
@@ -24,7 +63,7 @@ async function createRedisClient() {
           tls: process.env.REDIS_URL.startsWith('rediss://'),
           connectTimeout: 5000,
           reconnectStrategy: (retries) => {
-            if (retries > 3) return false;
+            if (retries > 3) return false; // stop retrying, fall back to memory
             return 1000;
           },
         },
@@ -44,15 +83,16 @@ async function createRedisClient() {
 
   const client = redis.createClient(clientConfig);
 
-  client.on('connect', () => {
+  client.on('ready', () => {
     console.log('✓ Redis connected');
     redisAvailable = true;
   });
 
-  client.on('error', (err) => {
-    if (!redisAvailable) {
-      // Only log once, don't spam
-    }
+  client.on('error', () => {
+    redisAvailable = false;
+  });
+
+  client.on('end', () => {
     redisAvailable = false;
   });
 
@@ -60,27 +100,28 @@ async function createRedisClient() {
     await client.connect();
     redisAvailable = true;
     return client;
-  } catch (err) {
-    console.warn('⚠ Redis unavailable — running without cache (location features limited)');
+  } catch {
+    console.warn('⚠ Redis unavailable — using in-memory location store (data lost on restart)');
     return null;
   }
 }
 
-// Initialize and export a proxy that falls back to mock
-const handler = {
-  get(target, prop) {
-    const client = target._client;
-    if (!client || !redisAvailable) {
-      return mockClient[prop] || (() => Promise.resolve(null));
+// ── Proxy: routes calls to Redis when available, in-memory otherwise ──
+let _redisClient = null;
+
+const proxy = new Proxy({}, {
+  get(_target, prop) {
+    if (redisAvailable && _redisClient) {
+      const val = _redisClient[prop];
+      return typeof val === 'function' ? val.bind(_redisClient) : val;
     }
-    return typeof client[prop] === 'function' ? client[prop].bind(client) : client[prop];
-  }
-};
+    return inMemoryClient[prop] ?? (() => Promise.resolve(null));
+  },
+});
 
-const proxy = new Proxy({ _client: null }, handler);
-
+// Bootstrap — connect to Redis, fall back silently if unavailable
 createRedisClient().then(client => {
-  proxy._client = client;
+  _redisClient = client;
 });
 
 module.exports = proxy;

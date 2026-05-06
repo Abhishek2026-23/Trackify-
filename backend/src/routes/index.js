@@ -1,6 +1,6 @@
 const express = require('express');
 const { validate } = require('../middleware/validator');
-const { authenticateToken, requireAdmin, requireOperator, requireDriver } = require('../middleware/auth');
+const { authenticateToken, optionalAuth, requireAdmin, requireOperator, requireDriver } = require('../middleware/auth');
 
 const authController = require('../controllers/authController');
 const locationController = require('../controllers/locationController');
@@ -19,10 +19,12 @@ router.post('/auth/refresh', authController.refreshToken);
 router.post('/auth/logout', authenticateToken, authController.logout);
 
 // ── Location ──────────────────────────────────────────────────────
-router.post('/location/update', validate('locationUpdate'), locationController.updateLocation);
-router.post('/location/passenger', validate('passengerLocation'), locationController.updatePassengerLocation);
-router.post('/location/offline', locationController.driverOffline);
-router.post('/location/passenger/offline', locationController.passengerOffline);
+// optionalAuth: attaches req.user if a valid JWT is present, but never
+// blocks unauthenticated drivers (e.g. token expired mid-trip).
+router.post('/location/update', optionalAuth, validate('locationUpdate'), locationController.updateLocation);
+router.post('/location/passenger', optionalAuth, validate('passengerLocation'), locationController.updatePassengerLocation);
+router.post('/location/offline', optionalAuth, locationController.driverOffline);
+router.post('/location/passenger/offline', optionalAuth, locationController.passengerOffline);
 router.get('/buses/live', locationController.getLiveLocations);
 router.get('/drivers/nearby', locationController.getNearbyDrivers);
 

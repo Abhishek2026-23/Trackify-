@@ -116,7 +116,10 @@ app.post('/location/update', (req, res) => {
                 timestamp: new Date().toISOString() };
 
   liveLocations.set(driverId, loc);
+  // Emit both event names so both the simple-app frontend and the
+  // web-dashboard (which listens for driver_location_update) receive updates
   io.emit('driver_location_update', loc);
+  io.emit('bus_location_update', loc); // legacy alias
   res.json({ success: true });
 });
 
@@ -167,7 +170,10 @@ app.get('/passengers/live', (req, res) => {
 // ── Location update — mark driver offline on logout ───────────────
 app.post('/location/offline', (req, res) => {
   const { driverId } = req.body;
-  if (driverId) liveLocations.delete(driverId);
+  if (driverId) {
+    liveLocations.delete(driverId);
+    io.emit('driver_offline', { driverId });
+  }
   res.json({ success: true });
 });
 

@@ -170,12 +170,18 @@ class _PassengerMapScreenState extends State<PassengerMapScreen> {
                 onTap: () {
                   setState(() => _isOnline = !_isOnline);
                   final user = context.read<AuthProvider>().user;
+                  final loc = context.read<LocationProvider>();
                   if (user != null) {
                     if (_isOnline) {
-                      context.read<LocationProvider>()
-                          .startPassengerTracking(user.id.toString());
+                      loc.startPassengerTracking(user.id.toString());
+                      // Immediately fetch nearby drivers and re-center map
+                      final p = loc.currentPosition;
+                      if (p != null) {
+                        _mapCtrl.move(LatLng(p.latitude, p.longitude), 14);
+                        context.read<DriverProvider>().fetchNearby(p.latitude, p.longitude);
+                      }
                     } else {
-                      context.read<LocationProvider>().stopTracking();
+                      loc.stopTracking();
                     }
                   }
                 },

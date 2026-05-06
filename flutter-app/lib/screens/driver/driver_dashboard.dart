@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -6,13 +5,14 @@ import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/location_provider.dart';
+import '../../services/socket_service.dart';
 import '../../utils/app_theme.dart';
 import '../role_selection_screen.dart';
 
 // Simple model for a nearby passenger
 class _PassengerInfo {
   final String userId;
-  final double lat, lng;
+  double lat, lng;
   final double distanceKm;
   _PassengerInfo(
       {required this.userId,
@@ -32,19 +32,64 @@ class _DriverDashboardState extends State<DriverDashboard> {
   bool _showPassengerPanel = false;
   final _mapCtrl = MapController();
 
-  // Simulated nearby passengers (real data comes via Socket.IO in production)
-  final List<_PassengerInfo> _nearbyPassengers = [];
-  Timer? _passengerRefreshTimer;
+  // Passengers received via Socket.IO
+  final Map<String, _PassengerInfo> _passengerMap = {};
+  List<_PassengerInfo> get _nearbyPassengers => _passengerMap.values.toList();
 
   @override
   void initState() {
     super.initState();
     context.read<LocationProvider>().getCurrentLocation();
+    _initSocket();
+  }
+
+  void _initSocket() {
+    SocketService.connect().then((_) {
+      // Listen for passenger location updates
+      SocketService.onPassengerLocationUpdate((data) {
+        final userId = data['userId']?.toString() ?? '';
+        if (userId.isEmpty) return;
+        final lat = (data['latitude'] as num?)?.toDouble();
+        final lng = (data['longitude'] as num?)?.toDouble();
+        if (lat == null || lng == null) return;
+
+        final myPos = context.read<LocationProvider>().currentPosition;
+        double dist = 0;
+        if (myPos != null) {
+          dist = _haversineKm(myPos.latitude, myPos.longitude, lat, lng);
+        }
+
+        if (!mounted) return;
+        setState(() {
+          _passengerMap[userId] = _PassengerInfo(
+            userId: userId, lat: lat, lng: lng, distanceKm: dist,
+          );
+        });
+      });
+
+      // Remove passenger when they go offline
+      SocketService.onPassengerOffline((userId) {
+        if (!mounted) return;
+        setState(() => _passengerMap.remove(userId));
+      });
+    });
+  }
+
+  double _haversineKm(double lat1, double lon1, double lat2, double lon2) {
+    const R = 6371.0;
+    final dLat = (lat2 - lat1) * math.pi / 180;
+    final dLon = (lon2 - lon1) * math.pi / 180;
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(lat1 * math.pi / 180) *
+            math.cos(lat2 * math.pi / 180) *
+            math.sin(dLon / 2) *
+            math.sin(dLon / 2);
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
   }
 
   @override
   void dispose() {
-    _passengerRefreshTimer?.cancel();
+    SocketService.disconnect();
     super.dispose();
   }
 
@@ -54,23 +99,10 @@ class _DriverDashboardState extends State<DriverDashboard> {
     setState(() => _isAvailable = !_isAvailable);
     if (_isAvailable) {
       loc.startTracking(user.driverId!, true);
-      // Start refreshing passenger list
-      _passengerRefreshTimer = Timer.periodic(
-        const Duration(seconds: 10),
-        (_) => _refreshPassengers(),
-      );
-      _refreshPassengers();
     } else {
       loc.stopTracking();
-      _passengerRefreshTimer?.cancel();
-      setState(() => _nearbyPassengers.clear());
+      setState(() => _passengerMap.clear());
     }
-  }
-
-  void _refreshPassengers() {
-    // In production this is driven by Socket.IO passenger_location_update events.
-    // For now we just keep the list as-is (populated by socket events).
-    setState(() {}); // trigger rebuild to update "last refreshed" time
   }
 
   List<LatLng> _buildCircle(LatLng center, double radiusKm,
@@ -162,7 +194,6 @@ class _DriverDashboardState extends State<DriverDashboard> {
               final navigator = Navigator.of(context);
               final auth = context.read<AuthProvider>();
               loc.stopTracking();
-              _passengerRefreshTimer?.cancel();
               await auth.logout();
               if (!mounted) return;
               navigator.pushAndRemoveUntil(

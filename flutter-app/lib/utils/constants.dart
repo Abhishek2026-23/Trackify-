@@ -1,11 +1,11 @@
 class AppConstants {
-  // ── Production backend (Render) ───────────────────────────────
-  static const String baseUrl   = 'https://trackify-zwup.onrender.com/api/v1';
-  static const String socketUrl = 'https://trackify-zwup.onrender.com';
+  // ── Local development (Chrome / web) ─────────────────────────
+  static const String baseUrl   = 'http://localhost:5001/api/v1';
+  static const String socketUrl = 'http://localhost:5001';
 
-  // ── Local development (uncomment when running locally) ────────
-  // static const String baseUrl   = 'http://localhost:5001/api/v1';
-  // static const String socketUrl = 'http://localhost:5001';
+  // ── Production backend (Render) — uncomment for prod ─────────
+  // static const String baseUrl   = 'https://trackify-zwup.onrender.com/api/v1';
+  // static const String socketUrl = 'https://trackify-zwup.onrender.com';
 
   // ── Android emulator (uncomment for emulator testing) ─────────
   // static const String baseUrl   = 'http://10.0.2.2:5001/api/v1';

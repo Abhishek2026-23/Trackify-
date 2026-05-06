@@ -20,7 +20,14 @@ export default function PassengerDashboard({ user, onLogout }) {
     fetchData();
     socketService.connect();
     socketService.onLocationUpdate((data) => {
-      setBuses(prev => prev.map(b => b.bus_id === data.bus_id ? { ...b, location: data } : b));
+      setBuses(prev => prev.map(b =>
+        b.bus_id === data.bus_id ? { ...b, location: data } : b
+      ));
+    });
+    socketService.onDriverOffline((data) => {
+      setBuses(prev => prev.map(b =>
+        b.bus_id === data.bus_id ? { ...b, location: null } : b
+      ));
     });
     return () => socketService.disconnect();
   }, []);
